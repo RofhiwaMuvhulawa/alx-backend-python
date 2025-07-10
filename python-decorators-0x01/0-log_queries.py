@@ -1,26 +1,27 @@
 import sqlite3
 import functools
 import logging
-import datetime
+from datetime import datetime
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 def log_queries(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         # Get the query from the first argument
         query = args[0] if args else "Unknown query"
-        # Log the query with timestamp
-        logging.info(f"Executing SQL query: {query}")
+        # Log the query with manual timestamp
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        logging.info(f"{timestamp} - Executing SQL query: {query}")
         try:
             # Execute the original function
             result = func(*args, **kwargs)
-            logging.info(f"Query executed successfully")
+            logging.info(f"{timestamp} - Query executed successfully")
             return result
         except Exception as e:
             # Log any errors that occur during query execution
-            logging.error(f"Query failed: {str(e)}")
+            logging.error(f"{timestamp} - Query failed: {str(e)}")
             raise
     return wrapper
 
