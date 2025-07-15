@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for utils.access_nested_map, utils.get_json, and utils.memoize functions."""
+"""Unit tests for utils.access_nested_map, get_json, and memoize functions."""
 
 import unittest
 from parameterized import parameterized
@@ -42,7 +42,8 @@ class TestGetJson(unittest.TestCase):
         mock_response = Mock()
         mock_response.json.return_value = test_payload
         with patch('requests.get', return_value=mock_response) as mock_get:
-            self.assertEqual(get_json(test_url), test_payload)
+            self.assertEqual(get_json(test_url),
+                             test_payload)
             mock_get.assert_called_once_with(test_url)
 
 
@@ -61,8 +62,10 @@ class TestMemoize(unittest.TestCase):
 
         with patch.object(TestClass, 'a_method', return_value=42) as mock_method:
             test_obj = TestClass()
-            self.assertEqual(test_obj.a_property, 42)
-            self.assertEqual(test_obj.a_property, 42)
+            self.assertEqual(test_obj.a_property,
+                             42)
+            self.assertEqual(test_obj.a_property,
+                             42)
             mock_method.assert_called_once()
 
 
