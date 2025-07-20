@@ -47,7 +47,11 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',  # Require authentication for API access
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',  # Enable session-based authentication
+        'rest_framework.authentication.BasicAuthentication',  # Optional: for admin or testing
     ],
 }
 
