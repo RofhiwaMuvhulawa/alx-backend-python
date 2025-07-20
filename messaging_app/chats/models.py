@@ -5,9 +5,13 @@ import uuid
 class User(AbstractUser):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
+    email = models.EmailField(unique=True)  # Override to make email required and unique
+    password = models.CharField(max_length=128)  # Explicitly defined (handled by Django auth)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
 
     class Meta:
-        db_table = 'auth_user'  # Use same table as built-in User for compatibility
+        db_table = 'auth_user'  # Use same table as built-in User
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
