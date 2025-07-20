@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Conversation, Message
-from rest_framework.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -32,5 +31,5 @@ class ConversationSerializer(serializers.ModelSerializer):
 
     def validate_participants(self, value):
         if len(value) < 2:
-            raise ValidationError("A conversation must have at least two participants.")
+            raise serializers.ValidationError("A conversation must have at least two participants.")
         return value
