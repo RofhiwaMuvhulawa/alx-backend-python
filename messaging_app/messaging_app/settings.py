@@ -34,7 +34,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_framework_simplejwt',  # Added for JWT authentication
+    'rest_framework_simplejwt',
+    'django_filters',  # Added for filtering
     'chats',
 ]
 
@@ -102,12 +103,11 @@ AUTH_USER_MODEL = 'chats.User'
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'chats.permissions.IsOwnerOrAdminModerator',  # Updated permission
+        'rest_framework.permissions.IsAuthenticated',
+        'chats.permissions.IsParticipantOfConversation',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication'
-        'rest_framework.authentication.BasicAuthentication', 
-        'rest_framework.authentication.SessionAuthentication',  # JWT authentication
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
 
