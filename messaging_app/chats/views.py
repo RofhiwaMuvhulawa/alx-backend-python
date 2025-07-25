@@ -5,7 +5,10 @@ from django.contrib.auth import get_user_model
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsParticipantOfConversation, IsOwnerOrAdminModerator
+from .pagination import MessagePagination
+from .filters import MessageFilter
 from drf_nested_routers import DefaultRouter, NestedDefaultRouter
+import django_filters.rest_framework
 
 User = get_user_model()
 
@@ -17,7 +20,6 @@ class ConversationViewSet(viewsets.ModelViewSet):
     search_fields = ['participants__username']
 
     def get_queryset(self):
-        # Filter conversations to those where the user is a participant
         return self.queryset.filter(participants=self.request.user)
 
     def perform_create(self, serializer):
@@ -28,16 +30,25 @@ class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation, IsOwnerOrAdminModerator]
-    filter_backends = [filters.OrderingFilter]
+    filter_backends = [filters.OrderingFilter, django_filters.rest_framework.DjangoFilterBackend]
     ordering_fields = ['sent_at']
+    filterset_class = MessageFilter
+    pagination_class = MessagePagination
 
     def get_queryset(self):
         conversation_id = self.kwargs.get('conversation_id')
         if conversation_id:
-            # Filter messages by conversation_id
             return Message.objects.filter(conversation__conversation_id=conversation_id)
-        # Filter messages by user's conversations
         return Message.objects.filter(conversation__participants=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         conversation_id = self.kwargs.get('conversation_id')
