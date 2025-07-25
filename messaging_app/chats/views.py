@@ -39,3 +39,11 @@ class MessageViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         serializer.save(sender=self.request.user)
+
+# URL configuration for nested routes
+router = DefaultRouter()
+router.register(r'conversations', ConversationViewSet, basename='conversation')
+messages_router = NestedDefaultRouter(router, r'conversations', lookup='conversation')
+messages_router.register(r'messages', MessageViewSet, basename='conversation-messages')
+
+urlpatterns = router.urls + messages_router.urls
