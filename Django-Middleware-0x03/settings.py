@@ -45,10 +45,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'chats.middleware.RestrictAccessByTimeMiddleware',
-    'chats.middleware.RolePermissionMiddleware',  # Add role permission middleware
-    'chats.middleware.RequestLoggingMiddleware',
-    'chats.middleware.RateLimitMiddleware',
+    'chats.middleware.RestrictAccessByTimeMiddleware',  # Time restriction middleware
+    'chats.middleware.RolePermissionMiddleware',  # Role-based access middleware
+    'chats.middleware.RequestLoggingMiddleware',  # Logging middleware
+    'chats.middleware.RateLimitMiddleware',  # Rate limiting middleware
 ]
 
 ROOT_URLCONF = 'messaging_app.urls'
