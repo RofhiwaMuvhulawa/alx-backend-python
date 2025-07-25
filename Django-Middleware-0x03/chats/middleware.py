@@ -35,19 +35,6 @@ class RestrictAccessByTimeMiddleware:
         response = self.get_response(request)
         return response
 
-class RolePermissionMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if request.path.startswith('/admin/') or request.path.startswith('/api/'):
-            if not request.user.is_authenticated:
-                return HttpResponseForbidden("Authentication required for this action.")
-            if not (request.user.is_staff or request.user.is_superuser or request.user.role == 'moderator'):
-                return HttpResponseForbidden("Only admins or moderators can perform this action.")
-        response = self.get_response(request)
-        return response
-
 class OffensiveLanguageMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -69,5 +56,18 @@ class OffensiveLanguageMiddleware:
                     status=status.HTTP_429_TOO_MANY_REQUESTS
                 )
             self.request_counts[ip_address].append(now)
+        response = self.get_response(request)
+        return response
+
+class RolepermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith('/admin/') or request.path.startswith('/api/'):
+            if not request.user.is_authenticated:
+                return HttpResponseForbidden("Authentication required for this action.")
+            if not (request.user.is_staff or request.user.is_superuser or request.user.role == 'moderator'):
+                return HttpResponseForbidden("Only admins or moderators can perform this action.")
         response = self.get_response(request)
         return response
