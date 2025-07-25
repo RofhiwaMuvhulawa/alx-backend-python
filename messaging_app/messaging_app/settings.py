@@ -105,7 +105,9 @@ REST_FRAMEWORK = {
         'chats.permissions.IsOwnerOrAdminModerator',  # Updated permission
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT authentication
+        'rest_framework_simplejwt.authentication.JWTAuthentication'
+        'rest_framework.authentication.BasicAuthentication', 
+        'rest_framework.authentication.SessionAuthentication',  # JWT authentication
     ],
 }
 
