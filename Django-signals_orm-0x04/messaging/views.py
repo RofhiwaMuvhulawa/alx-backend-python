@@ -45,12 +45,15 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         conversation_id = self.kwargs.get('conversation_id')
+        queryset = Message.objects.select_related('sender', 'receiver', 'conversation', 'parent_message').prefetch_related('replies')
         if conversation_id:
-            return Message.objects.filter(conversation__conversation_id=conversation_id)
-        return Message.objects.filter(conversation__participants=self.request.user)
+            queryset = queryset.filter(conversation__conversation_id=conversation_id)
+        return queryset.filter(conversation__participants=self.request.user)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        # Filter top-level messages (no parent) for listing
+        queryset = queryset.filter(parent_message__isnull=True)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
