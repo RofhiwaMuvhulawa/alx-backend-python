@@ -27,6 +27,12 @@ def log_message_edit(sender, instance, **kwargs):
 
 @receiver(post_delete, sender=User)
 def cleanup_user_data(sender, instance, **kwargs):
+    # Explicitly delete messages where user is sender or receiver
+    Message.objects.filter(sender=instance).delete()
+    Message.objects.filter(receiver=instance).delete()
+    # Explicitly delete notifications and message history (though CASCADE handles this)
+    Notification.objects.filter(user=instance).delete()
+    MessageHistory.objects.filter(edited_by=instance).delete()
     # Remove user from all conversations
     for conversation in instance.conversations.all():
         conversation.participants.remove(instance)
