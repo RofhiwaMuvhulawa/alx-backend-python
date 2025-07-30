@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import get_user_model
 from .models import Conversation, Message, MessageHistory
 from .serializers import ConversationSerializer, MessageSerializer, MessageHistorySerializer
@@ -11,6 +12,13 @@ from drf_nested_routers import DefaultRouter, NestedDefaultRouter
 import django_filters.rest_framework
 
 User = get_user_model()
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_user(request):
+    user = request.user
+    user.delete()
+    return Response({"detail": "User account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
