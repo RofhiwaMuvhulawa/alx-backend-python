@@ -93,7 +93,9 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='unread')
     def unread_messages(self, request):
-        queryset = Message.unread.for_user(request.user)
+        queryset = Message.unread.unread_for_user(request.user).only(
+            'id', 'conversation', 'sender', 'receiver', 'parent_message', 'content', 'timestamp', 'edited', 'read'
+        )
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
