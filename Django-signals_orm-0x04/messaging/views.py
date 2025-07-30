@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes, action
 from django.contrib.auth import get_user_model
+from django.views.decorators.cache import cache_page
 from .models import Conversation, Message, MessageHistory
 from .serializers import ConversationSerializer, MessageSerializer, MessageHistorySerializer
 from .permissions import IsParticipantOfConversation, IsOwnerOrAdminModerator
@@ -54,6 +55,16 @@ class MessageViewSet(viewsets.ModelViewSet):
                 conversation__participants=self.request.user
             ).select_related('sender', 'receiver', 'conversation', 'parent_message').prefetch_related('replies')
         return queryset.filter(parent_message__isnull=True)
+
+    @cache_page(60)
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         conversation_id = self.kwargs.get('conversation_id')
