@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from django.contrib.auth import get_user_model
 from .models import Conversation, Message, MessageHistory
 from .serializers import ConversationSerializer, MessageSerializer, MessageHistorySerializer
@@ -90,6 +90,16 @@ class MessageViewSet(viewsets.ModelViewSet):
                 {"detail": "Parent message not found."},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+    @action(detail=False, methods=['get'], url_path='unread')
+    def unread_messages(self, request):
+        queryset = Message.unread.for_user(request.user)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class MessageHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MessageHistory.objects.all()
