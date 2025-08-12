@@ -1,0 +1,23 @@
+# Commands used to set up Kubernetes Ingress
+
+# 1. Enable ingress addon in minikube
+minikube addons enable ingress
+
+# 2. Apply the ingress configuration
+kubectl apply -f ingress.yaml
+
+# 3. Verify ingress is created
+kubectl get ingress
+
+# 4. Get ingress details
+kubectl describe ingress django-messaging-ingress
+
+# 5. Add host entry to /etc/hosts (Linux/Mac) or C:\Windows\System32\drivers\etc\hosts (Windows)
+# Get minikube IP first
+minikube ip
+
+# Then add this line to hosts file:
+# <MINIKUBE_IP> messaging-app.local
+
+# 6. Test the ingress
+curl http://messaging-app.local/
