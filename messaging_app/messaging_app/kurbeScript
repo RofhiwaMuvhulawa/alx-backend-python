@@ -1,0 +1,40 @@
+#!/bin/bash
+
+echo "=== Kubernetes Cluster Setup Script ==="
+
+# Check if minikube is installed
+if ! command -v minikube &> /dev/null; then
+    echo "Error: minikube is not installed. Please install minikube first."
+    echo "Visit: https://minikube.sigs.k8s.io/docs/start/"
+    exit 1
+fi
+
+# Check if kubectl is installed
+if ! command -v kubectl &> /dev/null; then
+    echo "Error: kubectl is not installed. Please install kubectl first."
+    exit 1
+fi
+
+echo "✓ minikube and kubectl are installed"
+
+# Start minikube cluster
+echo "Starting Kubernetes cluster with minikube..."
+minikube start --driver=docker
+
+# Wait for cluster to be ready
+echo "Waiting for cluster to be ready..."
+sleep 10
+
+# Verify cluster is running
+echo "=== Cluster Information ==="
+kubectl cluster-info
+
+# Check cluster status
+echo "=== Cluster Status ==="
+kubectl get nodes
+
+# Retrieve available pods
+echo "=== Available Pods ==="
+kubectl get pods --all-namespaces
+
+echo "=== Kubernetes cluster setup complete! ==="
