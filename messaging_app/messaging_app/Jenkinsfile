@@ -1,0 +1,181 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+        GITHUB_CREDENTIALS = credentials('github-credentials')
+        DOCKER_IMAGE_NAME = 'your-dockerhub-username/django-messaging-app'
+        DOCKER_TAG = "${BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code from GitHub...'
+                git branch: 'main', 
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/your-username/alx-backend-python.git'
+                
+                // Navigate to messaging_app directory
+                dir('messaging_app') {
+                    echo 'Successfully checked out to messaging_app directory'
+                }
+            }
+        }
+        
+        stage('Setup Python Environment') {
+            steps {
+                dir('messaging_app') {
+                    echo 'Setting up Python virtual environment...'
+                    sh '''
+                        python -m venv venv
+                        . venv/bin/activate || venv\\Scripts\\activate
+                        python -m pip install --upgrade pip
+                    '''
+                }
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                dir('messaging_app') {
+                    echo 'Installing Python dependencies...'
+                    sh '''
+                        . venv/bin/activate || venv\\Scripts\\activate
+                        pip install -r requirements.txt
+                        pip install pytest-django pytest-cov pytest-html
+                    '''
+                }
+            }
+        }
+        
+        stage('Database Setup') {
+            steps {
+                dir('messaging_app') {
+                    echo 'Setting up test database...'
+                    sh '''
+                        . venv/bin/activate || venv\\Scripts\\activate
+                        export DJANGO_SETTINGS_MODULE=messaging_app.settings
+                        python manage.py migrate --run-syncdb
+                    '''
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                dir('messaging_app') {
+                    echo 'Running tests with pytest...'
+                    sh '''
+                        . venv/bin/activate || venv\\Scripts\\activate
+                        export DJANGO_SETTINGS_MODULE=messaging_app.settings
+                        pytest --junitxml=test-results.xml \
+                               --cov=. \
+                               --cov-report=xml \
+                               --cov-report=html \
+                               --html=test-report.html \
+                               --self-contained-html \
+                               chats/tests/ || true
+                    '''
+                }
+            }
+            post {
+                always {
+                    dir('messaging_app') {
+                        // Publish test results
+                        publishTestResults testResultsPattern: 'test-results.xml'
+                        
+                        // Publish HTML test report
+                        publishHTML([
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: '.',
+                            reportFiles: 'test-report.html',
+                            reportName: 'Pytest HTML Report'
+                        ])
+                        
+                        // Publish coverage report
+                        publishHTML([
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'htmlcov',
+                            reportFiles: 'index.html',
+                            reportName: 'Coverage Report'
+                        ])
+                    }
+                }
+            }
+        }
+        
+        stage('Code Quality Check') {
+            steps {
+                dir('messaging_app') {
+                    echo 'Running code quality checks...'
+                    sh '''
+                        . venv/bin/activate || venv\\Scripts\\activate
+                        pip install flake8 pylint
+                        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
+                        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics || true
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                dir('messaging_app') {
+                    echo 'Building Docker image...'
+                    script {
+                        def dockerImage = docker.build("${DOCKER_IMAGE_NAME}:${DOCKER_TAG}")
+                        dockerImage.tag("${DOCKER_IMAGE_NAME}:latest")
+                    }
+                }
+            }
+        }
+        
+        stage('Push Docker Image') {
+            steps {
+                dir('messaging_app') {
+                    echo 'Pushing Docker image to Docker Hub...'
+                    script {
+                        docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                            def dockerImage = docker.image("${DOCKER_IMAGE_NAME}:${DOCKER_TAG}")
+                            dockerImage.push()
+                            dockerImage.push('latest')
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                dir('messaging_app') {
+                    echo 'Running security scan on Docker image...'
+                    sh '''
+                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                               aquasec/trivy:latest image ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} || true
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline completed!'
+            // Clean up workspace
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline succeeded! 🎉'
+            // Send success notification (optional)
+        }
+        failure {
+            echo 'Pipeline failed! ❌'
+            // Send failure notification (optional)
+        }
+    }
+}
